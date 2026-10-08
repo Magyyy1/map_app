@@ -1,0 +1,159 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "type": "waypoint",
+      "x": 289.6,
+      "y": 149.6,
+      "name": "\u0433\u04321"
+    },
+    {
+      "id": 2,
+      "type": "entrance",
+      "x": 288.8,
+      "y": 170.4,
+      "accessible": true
+    },
+    {
+      "id": 3,
+      "type": "road",
+      "x": 288,
+      "y": 185.6
+    },
+    {
+      "id": 4,
+      "type": "road",
+      "x": 312,
+      "y": 184.8
+    },
+    {
+      "id": 5,
+      "type": "road",
+      "x": 314.4,
+      "y": 225.6
+    },
+    {
+      "id": 6,
+      "type": "road",
+      "x": 387.2,
+      "y": 228
+    },
+    {
+      "id": 7,
+      "type": "road",
+      "x": 388.8,
+      "y": 332
+    },
+    {
+      "id": 8,
+      "type": "road",
+      "x": 383.2,
+      "y": 564.8
+    },
+    {
+      "id": 9,
+      "type": "road",
+      "x": 421.6,
+      "y": 563.2
+    },
+    {
+      "id": 10,
+      "type": "road",
+      "x": 420.8,
+      "y": 592
+    },
+    {
+      "id": 12,
+      "type": "stairs",
+      "x": 493.6,
+      "y": 591.2
+    },
+    {
+      "id": 13,
+      "type": "road",
+      "x": 493.6,
+      "y": 563.2
+    },
+    {
+      "id": 14,
+      "type": "entrance",
+      "x": 474.4,
+      "y": 563.2,
+      "accessible": true
+    },
+    {
+      "id": 15,
+      "type": "waypoint",
+      "x": 535.2,
+      "y": 530.4,
+      "name": "\u0433\u04322"
+    }
+  ],
+  "edges": [
+    {
+      "from": 15,
+      "to": 14,
+      "weight": 10
+    },
+    {
+      "from": 13,
+      "to": 14,
+      "weight": 10
+    },
+    {
+      "from": 13,
+      "to": 12,
+      "weight": 10
+    },
+    {
+      "from": 12,
+      "to": 10,
+      "weight": 10
+    },
+    {
+      "from": 9,
+      "to": 8,
+      "weight": 10
+    },
+    {
+      "from": 10,
+      "to": 9,
+      "weight": 10
+    },
+    {
+      "from": 8,
+      "to": 7,
+      "weight": 10
+    },
+    {
+      "from": 7,
+      "to": 6,
+      "weight": 10
+    },
+    {
+      "from": 6,
+      "to": 5,
+      "weight": 10
+    },
+    {
+      "from": 5,
+      "to": 4,
+      "weight": 10
+    },
+    {
+      "from": 4,
+      "to": 3,
+      "weight": 10
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "weight": 10
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "weight": 10
+    }
+  ]
+}

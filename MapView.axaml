@@ -1,0 +1,122 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:paz="using:Avalonia.Controls.PanAndZoom"
+        x:Class="map_app.MapView"
+        Title="Редактор карты графа"
+        Width="1200" Height="800">
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#1769E0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1257B8"/>
+            <Setter Property="TextBlock.Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#0E4590"/>
+            <Setter Property="TextBlock.Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#B00020"/>
+        </Style>
+        <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#8C0019"/>
+        </Style>
+        <Style Selector="Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#6E0014"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="Black"/>
+        </Style>
+        <Style Selector="TextBlock.hint">
+            <Setter Property="Foreground" Value="#5A6666"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto, *">
+        <Border Grid.Row="0" ZIndex="1" Background="#F5F8F8" Padding="10" BorderBrush="#D2DCDC" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="Сбросить зум" Click="OnResetZoomClick"/>
+                <Button Content="Сохранить JSON" Click="OnSaveJsonClick"/>
+                <Button Content="Очистить всё" Click="OnClearGraphClick"/>
+                <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center" Margin="10,0"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <paz:ZoomBorder x:Name="ZoomControl"
+                            PanButton="Middle"
+                            ZoomSpeed="1.2"
+                            Stretch="None"
+                            EnableConstrains="False"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="#F5F8F8">
+
+                <Grid x:Name="MapContainer" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Image x:Name="MapImage" Stretch="Fill"/>
+                    <Canvas x:Name="GraphCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" PointerPressed="OnCanvasPointerPressed"/>
+                </Grid>
+            </paz:ZoomBorder>
+
+            <Grid x:Name="EditNodeOverlay" Background="#60000000" IsVisible="False">
+                <Border Background="#F5F8F8" Padding="20" CornerRadius="8" BorderBrush="#D2DCDC" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="360">
+                    <StackPanel Spacing="10">
+                        <TextBlock x:Name="OverlayTitle" Text="Новая точка" FontWeight="Bold" FontSize="16"/>
+                        <TextBlock Text="Тип точки:" Classes="hint"/>
+                        <ComboBox x:Name="NodeTypeComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="OnNodeTypeChanged">
+                            <ComboBoxItem Content="road"/>
+                            <ComboBoxItem Content="waypoint"/>
+                            <ComboBoxItem Content="entrance"/>
+                            <ComboBoxItem Content="stairs"/>
+                            <ComboBoxItem Content="ramp"/>
+                        </ComboBox>
+
+                        <StackPanel x:Name="NamePanel" Spacing="5" IsVisible="False">
+                            <TextBlock Text="Название (Name):" Classes="hint"/>
+                            <TextBox x:Name="NodeNameInput" Watermark="Например: Главный корпус"/>
+                        </StackPanel>
+
+                        <StackPanel x:Name="EntrancePanel" Spacing="10" IsVisible="False">
+                            <CheckBox x:Name="NodeAccessibleCheckBox" Content="Доступно для инвалидов (Accessible)"/>
+                            <TextBlock Text="Связанный Waypoint (Building ID):" Classes="hint"/>
+                            <ComboBox x:Name="BuildingWaypointsComboBox" HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+
+                        <Grid ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,10,0,0">
+                            <Button Grid.Column="0" x:Name="DeleteNodeButton" Classes="danger" Content="Удалить" Click="OnDeleteNodeClick"/>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="10">
+                                <Button Content="Отмена" Click="OnCancelNodeEdit"/>
+                                <Button Content="Сохранить" Click="OnSaveNodeEdit"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="EditEdgeOverlay" Background="#60000000" IsVisible="False">
+                <Border Background="#F5F8F8" Padding="20" CornerRadius="8" BorderBrush="#D2DCDC" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="360">
+                    <StackPanel Spacing="10">
+                        <TextBlock x:Name="EdgeOverlayTitle" Text="Связь" FontWeight="Bold" FontSize="16"/>
+                        <TextBlock Text="Время прохождения (секунды):" Classes="hint"/>
+                        <TextBox x:Name="EdgeTimeInput" Watermark="Например: 30"/>
+                        <TextBlock x:Name="EdgeTimeError" Text="Введите неотрицательное число." Foreground="#B00020" FontSize="12" IsVisible="False"/>
+
+                        <Grid ColumnDefinitions="Auto, *, Auto" Margin="0,10,0,0">
+                            <Button Grid.Column="0" Classes="danger" Content="Удалить" Click="OnDeleteEdgeClick"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                                <Button Content="Отмена" Click="OnCancelEdgeEdit"/>
+                                <Button Content="Сохранить" Click="OnSaveEdgeEdit"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

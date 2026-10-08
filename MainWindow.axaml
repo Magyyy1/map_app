@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:paz="using:Avalonia.Controls.PanAndZoom"
+        x:Class="map_app.MainWindow"
+        Title="Навигация по карте" Width="1100" Height="700">
+
+    <Grid ColumnDefinitions="320, *">
+        <!-- Боковая панель -->
+        <Border Grid.Column="0" Background="#F7F8FA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Padding="20" ZIndex="1">
+            <StackPanel Spacing="16">
+                <TextBlock Text="Маршрут" FontSize="22" FontWeight="Bold" Foreground="#222222"/>
+
+                <!-- Откуда -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Откуда:" FontSize="13" Foreground="#666666"/>
+                    <ComboBox Name="ComboStart" HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Куда -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Куда:" FontSize="13" Foreground="#666666"/>
+                    <ComboBox Name="ComboEnd" HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <Button Name="BtnBuildRoute" Content="Построить маршрут" 
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" 
+                        Background="#FC3F1D" Foreground="White" Padding="12"
+                        CornerRadius="6" FontWeight="SemiBold"/>
+
+                <Separator Margin="0,8" Background="#E0E0E0"/>
+
+                <!-- Результат расчета -->
+                <StackPanel Name="RouteInfoPanel" IsVisible="False" Spacing="8">
+                    <TextBlock Text="Время в пути:" FontSize="13" Foreground="#666666"/>
+                    <TextBlock Name="TxtTravelTime" Text="0 сек" FontSize="26" FontWeight="Bold" Foreground="#222222"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Область карты с масштабированием -->
+        <paz:ZoomBorder Grid.Column="1" Name="ZoomControl"
+                        PanButton="Middle"
+                        ZoomSpeed="1.2"
+                        Stretch="None"
+                        EnableConstrains="False"
+                        Background="#FAFAFA">
+            <Grid Name="MapContainer" HorizontalAlignment="Left" VerticalAlignment="Top">
+                <Image Name="MapImage" Stretch="Fill"/>
+                <Canvas Name="MapCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            </Grid>
+        </paz:ZoomBorder>
+    </Grid>
+</Window>
