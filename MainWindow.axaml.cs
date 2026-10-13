@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Svg.Skia;
@@ -15,13 +16,17 @@ namespace map_app;
 public partial class MainWindow : Window
 {
     private GraphDataDto? _graph;
+    private List<NodeDto> _waypoints = new();
     private const double MapWidth = 1280;
     private const double MapHeight = 853;
+    private const double WaypointHitAreaSize = 28;
 
     public MainWindow()
     {
         InitializeComponent();
-        BtnBuildRoute.Click += OnBuildRouteClick;
+        ComboStart.SelectionChanged += OnRoutePointSelectionChanged;
+        ComboEnd.SelectionChanged += OnRoutePointSelectionChanged;
+        ChkAccessibleRoute.IsCheckedChanged += OnAccessibleRouteChanged;
     }
 
     protected override void OnOpened(EventArgs e)
@@ -64,7 +69,7 @@ public partial class MainWindow : Window
 
             if (_graph != null)
             {
-                var waypoints = _graph.Nodes
+                _waypoints = _graph.Nodes
                     .Where(n => n.Type == "waypoint")
                     .Select(n => new NodeDto
                     {
@@ -76,8 +81,8 @@ public partial class MainWindow : Window
                     })
                     .ToList();
 
-                ComboStart.ItemsSource = waypoints;
-                ComboEnd.ItemsSource = waypoints;
+                ComboStart.ItemsSource = _waypoints;
+                ComboEnd.ItemsSource = _waypoints;
 
                 DrawAllNodes();
             }
@@ -88,10 +93,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnBuildRouteClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void UpdateRoute()
     {
         if (ComboStart.SelectedItem is not NodeDto startNode || ComboEnd.SelectedItem is not NodeDto endNode || _graph == null)
+        {
+            RouteInfoPanel.IsVisible = false;
+            DrawRoute(new List<NodeDto>());
             return;
+        }
 
         bool accessibleOnly = ChkAccessibleRoute.IsChecked ?? false;
         var (path, totalSeconds) = FindShortestPath(startNode.Id, endNode.Id, accessibleOnly);
@@ -113,6 +122,31 @@ public partial class MainWindow : Window
             TxtTravelTime.Text = "Путь не найден";
             DrawRoute(new List<NodeDto>());
         }
+    }
+
+    private void OnRoutePointSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateRoute();
+    }
+
+    private void OnAccessibleRouteChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        UpdateRoute();
+    }
+
+    private void OnMapPointPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Ellipse { Tag: NodeDto point })
+            return;
+
+        var selectedPoint = _waypoints.FirstOrDefault(node => node.Id == point.Id);
+        if (selectedPoint == null)
+            return;
+
+        if (ComboStart.SelectedItem is not NodeDto)
+            ComboStart.SelectedItem = selectedPoint;
+        else
+            ComboEnd.SelectedItem = selectedPoint;
     }
 
     private (List<NodeDto> Path, double TotalTime) FindShortestPath(int startId, int targetId, bool accessibleOnly)
@@ -196,17 +230,42 @@ public partial class MainWindow : Window
     {
         if (_graph == null) return;
 
+        var markersToRemove = MapCanvas.Children.OfType<Ellipse>().ToList();
+        foreach (var marker in markersToRemove)
+            MapCanvas.Children.Remove(marker);
+
+        int? startId = (ComboStart.SelectedItem as NodeDto)?.Id;
+        int? endId = (ComboEnd.SelectedItem as NodeDto)?.Id;
+
         foreach (var node in _graph.Nodes.Where(n => n.Type == "waypoint"))
         {
-            var ellipse = new Ellipse
+            bool isSelectedRoutePoint = node.Id == startId || node.Id == endId;
+            double size = isSelectedRoutePoint ? 16 : 8;
+
+            var hitArea = new Ellipse
             {
-                Width = 8,
-                Height = 8,
-                Fill = Brushes.Red
+                Width = WaypointHitAreaSize,
+                Height = WaypointHitAreaSize,
+                Fill = Brushes.Transparent,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Tag = node
             };
 
-            Canvas.SetLeft(ellipse, node.X - 4);
-            Canvas.SetTop(ellipse, node.Y - 4);
+            hitArea.PointerPressed += OnMapPointPressed;
+            Canvas.SetLeft(hitArea, node.X - WaypointHitAreaSize / 2);
+            Canvas.SetTop(hitArea, node.Y - WaypointHitAreaSize / 2);
+            MapCanvas.Children.Add(hitArea);
+
+            var ellipse = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = isSelectedRoutePoint ? Brushes.Yellow : Brushes.Red,
+                IsHitTestVisible = false
+            };
+
+            Canvas.SetLeft(ellipse, node.X - size / 2);
+            Canvas.SetTop(ellipse, node.Y - size / 2);
 
             MapCanvas.Children.Add(ellipse);
         }
@@ -217,6 +276,12 @@ public partial class MainWindow : Window
         var linesToRemove = MapCanvas.Children.OfType<Polyline>().ToList();
         foreach (var line in linesToRemove)
             MapCanvas.Children.Remove(line);
+
+        if (path.Count == 0)
+        {
+            DrawAllNodes();
+            return;
+        }
 
         var polyline = new Polyline
         {
@@ -231,5 +296,6 @@ public partial class MainWindow : Window
         }
 
         MapCanvas.Children.Add(polyline);
+        DrawAllNodes();
     }
 }

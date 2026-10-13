@@ -37,11 +37,6 @@
                 <!-- Чекбокс маршрута для инвалидов -->
                 <CheckBox Name="ChkAccessibleRoute" Content="Маршрут для инвалидов (без лестниц)" FontSize="13" Foreground="#333333"/>
 
-                <Button Name="BtnBuildRoute" Content="Построить маршрут" 
-                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" 
-                        Background="#FC3F1D" Foreground="White" Padding="12"
-                        CornerRadius="6" FontWeight="SemiBold"/>
-
                 <Separator Margin="0,8" Background="#E0E0E0"/>
 
                 <!-- Результат расчета -->
@@ -59,7 +54,7 @@
                         Stretch="None"
                         EnableConstrains="False"
                         Background="#FAFAFA">
-            <Grid Name="MapContainer" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <Grid Name="MapContainer" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Image Name="MapImage" Stretch="Fill"/>
                 <Canvas Name="MapCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </Grid>
