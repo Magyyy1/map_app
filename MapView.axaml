@@ -46,6 +46,7 @@
                 <Button Content="Сохранить JSON" Click="OnSaveJsonClick"/>
                 <Button Content="Очистить всё" Click="OnClearGraphClick"/>
                 <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center" Margin="10,0"/>
+                <TextBlock x:Name="CursorPositionTextBlock" Text="Курсор: X —, Y —" VerticalAlignment="Center" Margin="10,0"/>
             </StackPanel>
         </Border>
 
@@ -61,7 +62,7 @@
 
                 <Grid x:Name="MapContainer" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Image x:Name="MapImage" Stretch="Fill"/>
-                    <Canvas x:Name="GraphCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" PointerPressed="OnCanvasPointerPressed"/>
+                    <Canvas x:Name="GraphCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" PointerPressed="OnCanvasPointerPressed" PointerMoved="OnCanvasPointerMoved" PointerExited="OnCanvasPointerExited"/>
                 </Grid>
             </paz:ZoomBorder>
 

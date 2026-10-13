@@ -21,7 +21,6 @@ public partial class MainWindow : Window
     private List<NodeDto> _waypoints = new();
     private const double MapWidth = 1280;
     private const double MapHeight = 853;
-    private const double WaypointHitAreaSize = 28;
 
     public MainWindow()
     {
@@ -138,7 +137,7 @@ public partial class MainWindow : Window
 
     private void OnMapPointPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is not Ellipse { Tag: NodeDto point })
+        if (sender is not Polygon { Tag: NodeDto point })
             return;
 
         var selectedPoint = _waypoints.FirstOrDefault(node => node.Id == point.Id);
@@ -204,44 +203,38 @@ public partial class MainWindow : Window
     {
         if (_graph == null) return;
 
-        var markersToRemove = MapCanvas.Children.OfType<Ellipse>().ToList();
-        foreach (var marker in markersToRemove)
-            MapCanvas.Children.Remove(marker);
+        var overlaysToRemove = MapCanvas.Children.OfType<Polygon>().ToList();
+        foreach (var overlay in overlaysToRemove)
+            MapCanvas.Children.Remove(overlay);
 
         int? startId = (ComboStart.SelectedItem as NodeDto)?.Id;
         int? endId = (ComboEnd.SelectedItem as NodeDto)?.Id;
 
         foreach (var node in _graph.Nodes.Where(n => n.Type == "waypoint"))
         {
-            bool isSelectedRoutePoint = node.Id == startId || node.Id == endId;
-            double size = isSelectedRoutePoint ? 16 : 8;
+            var polygon = _graph.Polygons.FirstOrDefault(p => p.NodeId == node.Id);
+            if (polygon == null || polygon.Points.Count < 6 || polygon.Points.Count % 2 != 0)
+                continue;
 
-            var hitArea = new Ellipse
+            bool isSelectedRoutePoint = node.Id == startId || node.Id == endId;
+
+            var buildingOverlay = new Polygon
             {
-                Width = WaypointHitAreaSize,
-                Height = WaypointHitAreaSize,
-                Fill = Brushes.Transparent,
+                Points = new Points(polygon.Points
+                    .Chunk(2)
+                    .Select(pair => new Point(pair[0], pair[1]))),
+                Fill = isSelectedRoutePoint
+                    ? new SolidColorBrush(Color.FromArgb(50, 255, 0, 0))
+                    : Brushes.Transparent,
+                Stroke = isSelectedRoutePoint ? Brushes.Red : Brushes.Transparent,
+                StrokeThickness = isSelectedRoutePoint ? 3 : 0,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Tag = node
             };
 
-            hitArea.PointerPressed += OnMapPointPressed;
-            Canvas.SetLeft(hitArea, node.X - WaypointHitAreaSize / 2);
-            Canvas.SetTop(hitArea, node.Y - WaypointHitAreaSize / 2);
-            MapCanvas.Children.Add(hitArea);
-
-            var ellipse = new Ellipse
-            {
-                Width = size,
-                Height = size,
-                Fill = isSelectedRoutePoint ? Brushes.Yellow : Brushes.Red,
-                IsHitTestVisible = false
-            };
-
-            Canvas.SetLeft(ellipse, node.X - size / 2);
-            Canvas.SetTop(ellipse, node.Y - size / 2);
-
-            MapCanvas.Children.Add(ellipse);
+            ToolTip.SetTip(buildingOverlay, node.Name);
+            buildingOverlay.PointerPressed += OnMapPointPressed;
+            MapCanvas.Children.Add(buildingOverlay);
         }
     }
 

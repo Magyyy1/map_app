@@ -201,6 +201,17 @@ public partial class MapView : Window
         }
     }
 
+    private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
+    {
+        var position = e.GetPosition(GraphCanvas);
+        CursorPositionTextBlock.Text = $"Курсор: X {position.X.ToString("0.0", CultureInfo.InvariantCulture)}, Y {position.Y.ToString("0.0", CultureInfo.InvariantCulture)}";
+    }
+
+    private void OnCanvasPointerExited(object? sender, PointerEventArgs e)
+    {
+        CursorPositionTextBlock.Text = "Курсор: X —, Y —";
+    }
+
     private void OnNodePointerPressed(object? sender, PointerPressedEventArgs e)
     {
         e.Handled = true;
