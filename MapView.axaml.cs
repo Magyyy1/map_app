@@ -23,6 +23,7 @@ public partial class MapView : Window
     private NodeDto? _editingNode = null;
     private EdgeDto? _editingEdge = null;
     private Point? _pendingNodePos = null;
+    private bool _areLinksHighlighted;
     private int _nextId = 1;
 
     public MapView()
@@ -43,6 +44,7 @@ public partial class MapView : Window
 
     private const double MapWidth = 1280;
     private const double MapHeight = 853;
+    private const double WalkingSpeed = 1.4;
 
     private void LoadMapImage(string resourceUri)
     {
@@ -107,8 +109,8 @@ public partial class MapView : Window
                 {
                     StartPoint = start,
                     EndPoint = end,
-                    Stroke = Brushes.Cyan,
-                    StrokeThickness = 3
+                    Stroke = _areLinksHighlighted ? Brushes.Gold : Brushes.Cyan,
+                    StrokeThickness = _areLinksHighlighted ? 6 : 3
                 };
                 GraphCanvas.Children.Add(line);
 
@@ -199,6 +201,17 @@ public partial class MapView : Window
         }
     }
 
+    private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
+    {
+        var position = e.GetPosition(GraphCanvas);
+        CursorPositionTextBlock.Text = $"Курсор: X {position.X.ToString("0.0", CultureInfo.InvariantCulture)}, Y {position.Y.ToString("0.0", CultureInfo.InvariantCulture)}";
+    }
+
+    private void OnCanvasPointerExited(object? sender, PointerEventArgs e)
+    {
+        CursorPositionTextBlock.Text = "Курсор: X —, Y —";
+    }
+
     private void OnNodePointerPressed(object? sender, PointerPressedEventArgs e)
     {
         e.Handled = true;
@@ -254,7 +267,7 @@ public partial class MapView : Window
                         {
                             Source = _selectedEdgeSource.Id,
                             Target = node.Id,
-                            Time = 10
+                            Time = CalculateTravelSeconds(_selectedEdgeSource, node)
                         });
                     }
 
@@ -500,5 +513,20 @@ public partial class MapView : Window
     private void OnResetZoomClick(object? sender, RoutedEventArgs e)
     {
         ZoomControl?.ResetMatrix();
+    }
+
+    private static double CalculateTravelSeconds(NodeDto from, NodeDto to)
+    {
+        double deltaX = from.X - to.X;
+        double deltaY = from.Y - to.Y;
+        double distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+        return Math.Max(1, Math.Round(distance / WalkingSpeed));
+    }
+
+    private void OnHighlightLinksClick(object? sender, RoutedEventArgs e)
+    {
+        _areLinksHighlighted = !_areLinksHighlighted;
+        HighlightLinksButton.Content = _areLinksHighlighted ? "Убрать подсветку" : "Подсветить связи";
+        RedrawGraph();
     }
 }

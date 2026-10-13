@@ -1,9 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Svg.Skia;
+using QuikGraph;
+using QuikGraph.Algorithms;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,13 +18,18 @@ namespace map_app;
 public partial class MainWindow : Window
 {
     private GraphDataDto? _graph;
+    private List<NodeDto> _waypoints = new();
     private const double MapWidth = 1280;
     private const double MapHeight = 853;
+    private const double WalkingSpeed = 1.4;
+    private const double DisablePeopleSpeed = 0.7;
 
     public MainWindow()
     {
         InitializeComponent();
-        BtnBuildRoute.Click += OnBuildRouteClick;
+        ComboStart.SelectionChanged += OnRoutePointSelectionChanged;
+        ComboEnd.SelectionChanged += OnRoutePointSelectionChanged;
+        ChkAccessibleRoute.IsCheckedChanged += OnAccessibleRouteChanged;
     }
 
     protected override void OnOpened(EventArgs e)
@@ -64,7 +72,7 @@ public partial class MainWindow : Window
 
             if (_graph != null)
             {
-                var waypoints = _graph.Nodes
+                _waypoints = _graph.Nodes
                     .Where(n => n.Type == "waypoint")
                     .Select(n => new NodeDto
                     {
@@ -76,8 +84,8 @@ public partial class MainWindow : Window
                     })
                     .ToList();
 
-                ComboStart.ItemsSource = waypoints;
-                ComboEnd.ItemsSource = waypoints;
+                ComboStart.ItemsSource = _waypoints;
+                ComboEnd.ItemsSource = _waypoints;
 
                 DrawAllNodes();
             }
@@ -88,13 +96,19 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnBuildRouteClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void UpdateRoute()
     {
         if (ComboStart.SelectedItem is not NodeDto startNode || ComboEnd.SelectedItem is not NodeDto endNode || _graph == null)
+        {
+            RouteInfoPanel.IsVisible = false;
+            DrawRoute(new List<NodeDto>());
             return;
+        }
 
         bool accessibleOnly = ChkAccessibleRoute.IsChecked ?? false;
         var (path, totalSeconds) = FindShortestPath(startNode.Id, endNode.Id, accessibleOnly);
+        if (accessibleOnly)
+            totalSeconds *= WalkingSpeed / DisablePeopleSpeed;
 
         if (path.Count > 0)
         {
@@ -115,100 +129,116 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnRoutePointSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateRoute();
+    }
+
+    private void OnAccessibleRouteChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        UpdateRoute();
+    }
+
+    private void OnMapPointPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Polygon { Tag: NodeDto point })
+            return;
+
+        var selectedPoint = _waypoints.FirstOrDefault(node => node.Id == point.Id);
+        if (selectedPoint == null)
+            return;
+
+        if (ComboStart.SelectedItem is not NodeDto)
+            ComboStart.SelectedItem = selectedPoint;
+        else
+            ComboEnd.SelectedItem = selectedPoint;
+    }
+
     private (List<NodeDto> Path, double TotalTime) FindShortestPath(int startId, int targetId, bool accessibleOnly)
     {
-        var distances = new Dictionary<int, double>();
-        var previous = new Dictionary<int, int>();
-        var nodes = new List<int>();
-
-        // Если включен режим для инвалидов, исключаем узлы с лестницами
-        var excludedNodes = new HashSet<int>();
-        if (accessibleOnly)
-        {
-            foreach (var node in _graph!.Nodes)
-            {
-                if (node.Type == "stairs")
-                {
-                    excludedNodes.Add(node.Id);
-                }
-            }
-        }
-
-        if (excludedNodes.Contains(startId) || excludedNodes.Contains(targetId))
+        if (_graph == null)
             return (new List<NodeDto>(), 0);
 
-        foreach (var node in _graph!.Nodes)
+        // если включен режим для инвалидов, лестницы исключаются
+        var excludedNodeIds = accessibleOnly
+            ? _graph.Nodes.Where(node => node.Type == "stairs").Select(node => node.Id).ToHashSet()
+            : new HashSet<int>();
+
+        if (excludedNodeIds.Contains(startId) || excludedNodeIds.Contains(targetId))
+            return (new List<NodeDto>(), 0);
+
+        var nodesById = _graph.Nodes
+            .Where(node => !excludedNodeIds.Contains(node.Id))
+            .ToDictionary(node => node.Id);
+
+        if (!nodesById.ContainsKey(startId) || !nodesById.ContainsKey(targetId))
+            return (new List<NodeDto>(), 0);
+
+        var graph = new UndirectedGraph<int, TaggedEdge<int, double>>();
+        graph.AddVertexRange(nodesById.Keys);
+
+        foreach (var edge in _graph.Edges)
         {
-            if (excludedNodes.Contains(node.Id)) continue;
-            distances[node.Id] = double.MaxValue;
-            nodes.Add(node.Id);
+            if (!nodesById.ContainsKey(edge.From) || !nodesById.ContainsKey(edge.To))
+                continue;
+
+            graph.AddEdge(new TaggedEdge<int, double>(edge.From, edge.To, edge.Weight > 0 ? edge.Weight : 1));
         }
 
-        if (!distances.ContainsKey(startId)) return (new List<NodeDto>(), 0);
-        distances[startId] = 0;
+        var tryGetPath = graph.ShortestPathsDijkstra(edge => edge.Tag, startId);
+        if (!tryGetPath(targetId, out IEnumerable<TaggedEdge<int, double>>? pathEdges))
+            return (new List<NodeDto>(), 0);
 
-        while (nodes.Count > 0)
+        var path = new List<NodeDto> { nodesById[startId] };
+        var totalTime = 0d;
+        var currentId = startId;
+
+        foreach (var edge in pathEdges)
         {
-            nodes.Sort((x, y) => distances[x].CompareTo(distances[y]));
-            var smallest = nodes[0];
-            nodes.Remove(smallest);
-
-            if (smallest == targetId)
-            {
-                var path = new List<NodeDto>();
-                int curr = targetId;
-
-                while (previous.ContainsKey(curr))
-                {
-                    path.Add(_graph.Nodes.First(n => n.Id == curr));
-                    curr = previous[curr];
-                }
-
-                path.Add(_graph.Nodes.First(n => n.Id == startId));
-                path.Reverse();
-
-                return (path, distances[targetId]);
-            }
-
-            if (distances[smallest] == double.MaxValue) break;
-
-            var neighbors = _graph.Edges.Where(e => e.From == smallest || e.To == smallest);
-            foreach (var edge in neighbors)
-            {
-                int neighborId = edge.From == smallest ? edge.To : edge.From;
-                if (excludedNodes.Contains(neighborId)) continue;
-
-                double weight = edge.Weight > 0 ? edge.Weight : 1;
-                double alt = distances[smallest] + weight;
-
-                if (alt < distances[neighborId])
-                {
-                    distances[neighborId] = alt;
-                    previous[neighborId] = smallest;
-                }
-            }
+            currentId = edge.Source == currentId ? edge.Target : edge.Source;
+            path.Add(nodesById[currentId]);
+            totalTime += edge.Tag;
         }
 
-        return (new List<NodeDto>(), 0);
+        return (path, totalTime);
     }
 
     private void DrawAllNodes()
     {
         if (_graph == null) return;
 
+        var overlaysToRemove = MapCanvas.Children.OfType<Polygon>().ToList();
+        foreach (var overlay in overlaysToRemove)
+            MapCanvas.Children.Remove(overlay);
+
+        int? startId = (ComboStart.SelectedItem as NodeDto)?.Id;
+        int? endId = (ComboEnd.SelectedItem as NodeDto)?.Id;
+
         foreach (var node in _graph.Nodes.Where(n => n.Type == "waypoint"))
         {
-            var ellipse = new Ellipse
+            var polygon = _graph.Polygons.FirstOrDefault(p => p.NodeId == node.Id);
+            if (polygon == null || polygon.Points.Count < 6 || polygon.Points.Count % 2 != 0)
+                continue;
+
+            bool isSelectedRoutePoint = node.Id == startId || node.Id == endId;
+
+            var buildingOverlay = new Polygon
             {
-                Width = 8,
-                Height = 8,
-                Fill = Brushes.Red
+                Points = new Points(polygon.Points
+                    .Chunk(2)
+                    .Select(pair => new Point(pair[0], pair[1]))),
+                Fill = isSelectedRoutePoint
+                    ? new SolidColorBrush(Color.FromArgb(50, 255, 0, 0))
+                    : Brushes.Transparent,
+                Stroke = isSelectedRoutePoint ? Brushes.Red : Brushes.Transparent,
+                StrokeThickness = isSelectedRoutePoint ? 3 : 0,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Tag = node
             };
 
-            Canvas.SetLeft(ellipse, node.X - 4);
-            Canvas.SetTop(ellipse, node.Y - 4);
-
-            MapCanvas.Children.Add(ellipse);
+            ToolTip.SetTip(buildingOverlay, node.Name);
+            buildingOverlay.PointerPressed += OnMapPointPressed;
+            MapCanvas.Children.Add(buildingOverlay);
         }
     }
 
@@ -217,6 +247,12 @@ public partial class MainWindow : Window
         var linesToRemove = MapCanvas.Children.OfType<Polyline>().ToList();
         foreach (var line in linesToRemove)
             MapCanvas.Children.Remove(line);
+
+        if (path.Count == 0)
+        {
+            DrawAllNodes();
+            return;
+        }
 
         var polyline = new Polyline
         {
@@ -231,5 +267,6 @@ public partial class MainWindow : Window
         }
 
         MapCanvas.Children.Add(polyline);
+        DrawAllNodes();
     }
 }

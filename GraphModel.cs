@@ -10,6 +10,19 @@ public class GraphDataDto
 
     [JsonPropertyName("edges")]
     public List<EdgeDto> Edges { get; set; } = new();
+
+    [JsonPropertyName("polygons")]
+    public List<PolygonDto> Polygons { get; set; } = new();
+}
+
+public class PolygonDto
+{
+    [JsonPropertyName("node_id")]
+    public int NodeId { get; set; }
+
+    // Flattened coordinate pairs: [x1, y1, x2, y2, ...].
+    [JsonPropertyName("points")]
+    public List<int> Points { get; set; } = new();
 }
 
 public class NodeDto
