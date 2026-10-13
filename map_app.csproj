@@ -22,10 +22,5 @@
         <PackageReference Include="QuikGraph" Version="2.5.0" />
         <PackageReference Include="QuikGraph.Graphviz" Version="2.5.0" />
         <AvaloniaResource Include="Assets\**" />
-
-        <PackageReference Include="SkiaSharp" Version="3.116.1" />
-        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
-        <PackageReference Include="HarfBuzzSharp" Version="8.3.1.1" />
-        <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="8.3.1.1" />
     </ItemGroup>
 </Project>
