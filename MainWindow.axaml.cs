@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     private List<NodeDto> _waypoints = new();
     private const double MapWidth = 1280;
     private const double MapHeight = 853;
+    private const double WalkingSpeed = 1.4;
+    private const double DisablePeopleSpeed = 0.7;
 
     public MainWindow()
     {
@@ -105,6 +107,8 @@ public partial class MainWindow : Window
 
         bool accessibleOnly = ChkAccessibleRoute.IsChecked ?? false;
         var (path, totalSeconds) = FindShortestPath(startNode.Id, endNode.Id, accessibleOnly);
+        if (accessibleOnly)
+            totalSeconds *= WalkingSpeed / DisablePeopleSpeed;
 
         if (path.Count > 0)
         {
