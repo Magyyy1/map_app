@@ -69,12 +69,14 @@
                     <StackPanel Spacing="10">
                         <TextBlock x:Name="OverlayTitle" Text="Новая точка" FontWeight="Bold" FontSize="16"/>
                         <TextBlock Text="Тип точки:" Classes="hint"/>
+                        
+                        <!-- Русские наименования типов точек -->
                         <ComboBox x:Name="NodeTypeComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="OnNodeTypeChanged">
-                            <ComboBoxItem Content="road"/>
-                            <ComboBoxItem Content="waypoint"/>
-                            <ComboBoxItem Content="entrance"/>
-                            <ComboBoxItem Content="stairs"/>
-                            <ComboBoxItem Content="ramp"/>
+                            <ComboBoxItem Content="Дорога" Tag="road"/>
+                            <ComboBoxItem Content="Точка маршрута" Tag="waypoint"/>
+                            <ComboBoxItem Content="Вход" Tag="entrance"/>
+                            <ComboBoxItem Content="Лестница" Tag="stairs"/>
+                            <ComboBoxItem Content="Пандус" Tag="ramp"/>
                         </ComboBox>
 
                         <StackPanel x:Name="NamePanel" Spacing="5" IsVisible="False">

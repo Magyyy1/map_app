@@ -75,3 +75,4 @@ C:\Users\Danis\Downloads\map_app\map_app\obj\Debug\net10.0\refint\map_app.dll
 C:\Users\Danis\Downloads\map_app\map_app\obj\Debug\net10.0\map_app.pdb
 C:\Users\Danis\Downloads\map_app\map_app\obj\Debug\net10.0\map_app.genruntimeconfig.cache
 C:\Users\Danis\Downloads\map_app\map_app\obj\Debug\net10.0\ref\map_app.dll
+C:\Users\Danis\Downloads\map_app\map_app\obj\Debug\net10.0\map_app.sourcelink.json

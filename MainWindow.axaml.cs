@@ -64,7 +64,6 @@ public partial class MainWindow : Window
 
             if (_graph != null)
             {
-                // Формируем человекочитаемые имена для точек типа waypoint
                 var waypoints = _graph.Nodes
                     .Where(n => n.Type == "waypoint")
                     .Select(n => new NodeDto
@@ -94,7 +93,8 @@ public partial class MainWindow : Window
         if (ComboStart.SelectedItem is not NodeDto startNode || ComboEnd.SelectedItem is not NodeDto endNode || _graph == null)
             return;
 
-        var (path, totalSeconds) = FindShortestPath(startNode.Id, endNode.Id);
+        bool accessibleOnly = ChkAccessibleRoute.IsChecked ?? false;
+        var (path, totalSeconds) = FindShortestPath(startNode.Id, endNode.Id, accessibleOnly);
 
         if (path.Count > 0)
         {
@@ -107,20 +107,44 @@ public partial class MainWindow : Window
 
             DrawRoute(path);
         }
+        else
+        {
+            RouteInfoPanel.IsVisible = true;
+            TxtTravelTime.Text = "Путь не найден";
+            DrawRoute(new List<NodeDto>());
+        }
     }
 
-    private (List<NodeDto> Path, double TotalTime) FindShortestPath(int startId, int targetId)
+    private (List<NodeDto> Path, double TotalTime) FindShortestPath(int startId, int targetId, bool accessibleOnly)
     {
         var distances = new Dictionary<int, double>();
         var previous = new Dictionary<int, int>();
         var nodes = new List<int>();
 
+        // Если включен режим для инвалидов, исключаем узлы с лестницами
+        var excludedNodes = new HashSet<int>();
+        if (accessibleOnly)
+        {
+            foreach (var node in _graph!.Nodes)
+            {
+                if (node.Type == "stairs")
+                {
+                    excludedNodes.Add(node.Id);
+                }
+            }
+        }
+
+        if (excludedNodes.Contains(startId) || excludedNodes.Contains(targetId))
+            return (new List<NodeDto>(), 0);
+
         foreach (var node in _graph!.Nodes)
         {
+            if (excludedNodes.Contains(node.Id)) continue;
             distances[node.Id] = double.MaxValue;
             nodes.Add(node.Id);
         }
 
+        if (!distances.ContainsKey(startId)) return (new List<NodeDto>(), 0);
         distances[startId] = 0;
 
         while (nodes.Count > 0)
@@ -152,6 +176,8 @@ public partial class MainWindow : Window
             foreach (var edge in neighbors)
             {
                 int neighborId = edge.From == smallest ? edge.To : edge.From;
+                if (excludedNodes.Contains(neighborId)) continue;
+
                 double weight = edge.Weight > 0 ? edge.Weight : 1;
                 double alt = distances[smallest] + weight;
 

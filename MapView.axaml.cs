@@ -170,8 +170,10 @@ public partial class MapView : Window
 
     private string GetNodeTooltip(NodeDto node) => node.Type switch
     {
-        "waypoint" => $"ID: {node.Id} [Waypoint: {node.Name}]",
-        "entrance" => $"ID: {node.Id} [Entrance] Acc: {node.Accessible}, Building: #{node.Building}",
+        "waypoint" => $"ID: {node.Id} [Точка: {node.Name}]",
+        "entrance" => $"ID: {node.Id} [Вход] Доступ: {node.Accessible}, Здание: #{node.Building}",
+        "stairs" => $"ID: {node.Id} [Лестница]",
+        "ramp" => $"ID: {node.Id} [Пандус]",
         _ => $"ID: {node.Id} [{node.Type}]"
     };
 
@@ -220,7 +222,7 @@ public partial class MapView : Window
 
                 for (int i = 0; i < NodeTypeComboBox.Items.Count; i++)
                 {
-                    if (NodeTypeComboBox.Items[i] is ComboBoxItem item && item.Content?.ToString() == node.Type)
+                    if (NodeTypeComboBox.Items[i] is ComboBoxItem item && item.Tag?.ToString() == node.Type)
                     {
                         NodeTypeComboBox.SelectedIndex = i;
                         break;
@@ -332,9 +334,9 @@ public partial class MapView : Window
 
     private void OnNodeTypeChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (NodeTypeComboBox?.SelectedItem is ComboBoxItem item && item.Content != null)
+        if (NodeTypeComboBox?.SelectedItem is ComboBoxItem item && item.Tag != null)
         {
-            UpdateFieldsVisibility(item.Content.ToString()!);
+            UpdateFieldsVisibility(item.Tag.ToString()!);
         }
     }
 
@@ -386,7 +388,7 @@ public partial class MapView : Window
 
     private void OnSaveNodeEdit(object? sender, RoutedEventArgs e)
     {
-        string type = (NodeTypeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "road";
+        string type = (NodeTypeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "road";
         string? name = type == "waypoint" ? NodeNameInput.Text?.Trim() : null;
         bool? accessible = type == "entrance" ? NodeAccessibleCheckBox.IsChecked : null;
 

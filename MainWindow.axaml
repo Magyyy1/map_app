@@ -34,6 +34,9 @@
                     </ComboBox>
                 </StackPanel>
 
+                <!-- Чекбокс маршрута для инвалидов -->
+                <CheckBox Name="ChkAccessibleRoute" Content="Маршрут для инвалидов (без лестниц)" FontSize="13" Foreground="#333333"/>
+
                 <Button Name="BtnBuildRoute" Content="Построить маршрут" 
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" 
                         Background="#FC3F1D" Foreground="White" Padding="12"
