@@ -5,6 +5,8 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Svg.Skia;
+using QuikGraph;
+using QuikGraph.Algorithms;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -151,79 +153,51 @@ public partial class MainWindow : Window
 
     private (List<NodeDto> Path, double TotalTime) FindShortestPath(int startId, int targetId, bool accessibleOnly)
     {
-        var distances = new Dictionary<int, double>();
-        var previous = new Dictionary<int, int>();
-        var nodes = new List<int>();
-
-        // Если включен режим для инвалидов, исключаем узлы с лестницами
-        var excludedNodes = new HashSet<int>();
-        if (accessibleOnly)
-        {
-            foreach (var node in _graph!.Nodes)
-            {
-                if (node.Type == "stairs")
-                {
-                    excludedNodes.Add(node.Id);
-                }
-            }
-        }
-
-        if (excludedNodes.Contains(startId) || excludedNodes.Contains(targetId))
+        if (_graph == null)
             return (new List<NodeDto>(), 0);
 
-        foreach (var node in _graph!.Nodes)
+        // если включен режим для инвалидов, лестницы исключаются
+        var excludedNodeIds = accessibleOnly
+            ? _graph.Nodes.Where(node => node.Type == "stairs").Select(node => node.Id).ToHashSet()
+            : new HashSet<int>();
+
+        if (excludedNodeIds.Contains(startId) || excludedNodeIds.Contains(targetId))
+            return (new List<NodeDto>(), 0);
+
+        var nodesById = _graph.Nodes
+            .Where(node => !excludedNodeIds.Contains(node.Id))
+            .ToDictionary(node => node.Id);
+
+        if (!nodesById.ContainsKey(startId) || !nodesById.ContainsKey(targetId))
+            return (new List<NodeDto>(), 0);
+
+        var graph = new UndirectedGraph<int, TaggedEdge<int, double>>();
+        graph.AddVertexRange(nodesById.Keys);
+
+        foreach (var edge in _graph.Edges)
         {
-            if (excludedNodes.Contains(node.Id)) continue;
-            distances[node.Id] = double.MaxValue;
-            nodes.Add(node.Id);
+            if (!nodesById.ContainsKey(edge.From) || !nodesById.ContainsKey(edge.To))
+                continue;
+
+            graph.AddEdge(new TaggedEdge<int, double>(edge.From, edge.To, edge.Weight > 0 ? edge.Weight : 1));
         }
 
-        if (!distances.ContainsKey(startId)) return (new List<NodeDto>(), 0);
-        distances[startId] = 0;
+        var tryGetPath = graph.ShortestPathsDijkstra(edge => edge.Tag, startId);
+        if (!tryGetPath(targetId, out IEnumerable<TaggedEdge<int, double>>? pathEdges))
+            return (new List<NodeDto>(), 0);
 
-        while (nodes.Count > 0)
+        var path = new List<NodeDto> { nodesById[startId] };
+        var totalTime = 0d;
+        var currentId = startId;
+
+        foreach (var edge in pathEdges)
         {
-            nodes.Sort((x, y) => distances[x].CompareTo(distances[y]));
-            var smallest = nodes[0];
-            nodes.Remove(smallest);
-
-            if (smallest == targetId)
-            {
-                var path = new List<NodeDto>();
-                int curr = targetId;
-
-                while (previous.ContainsKey(curr))
-                {
-                    path.Add(_graph.Nodes.First(n => n.Id == curr));
-                    curr = previous[curr];
-                }
-
-                path.Add(_graph.Nodes.First(n => n.Id == startId));
-                path.Reverse();
-
-                return (path, distances[targetId]);
-            }
-
-            if (distances[smallest] == double.MaxValue) break;
-
-            var neighbors = _graph.Edges.Where(e => e.From == smallest || e.To == smallest);
-            foreach (var edge in neighbors)
-            {
-                int neighborId = edge.From == smallest ? edge.To : edge.From;
-                if (excludedNodes.Contains(neighborId)) continue;
-
-                double weight = edge.Weight > 0 ? edge.Weight : 1;
-                double alt = distances[smallest] + weight;
-
-                if (alt < distances[neighborId])
-                {
-                    distances[neighborId] = alt;
-                    previous[neighborId] = smallest;
-                }
-            }
+            currentId = edge.Source == currentId ? edge.Target : edge.Source;
+            path.Add(nodesById[currentId]);
+            totalTime += edge.Tag;
         }
 
-        return (new List<NodeDto>(), 0);
+        return (path, totalTime);
     }
 
     private void DrawAllNodes()
