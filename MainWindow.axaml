@@ -2,62 +2,82 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:paz="using:Avalonia.Controls.PanAndZoom"
         x:Class="map_app.MainWindow"
-        Title="Навигация по карте" Width="1100" Height="700">
+        Title="Где я? — Навигатор по кампусу" Width="1200" Height="780"
+        Icon="avares://map_app/Assets/logo.png"
+        WindowStartupLocation="CenterScreen">
 
-    <Grid ColumnDefinitions="320, *">
-        <!-- Боковая панель -->
-        <Border Grid.Column="0" Background="#F7F8FA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Padding="20" ZIndex="1">
-            <StackPanel Spacing="16">
-                <TextBlock Text="Маршрут" FontSize="22" FontWeight="Bold" Foreground="#222222"/>
-
-                <!-- Откуда -->
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Откуда:" FontSize="13" Foreground="#666666"/>
-                    <ComboBox Name="ComboStart" HorizontalAlignment="Stretch">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+    <Grid RowDefinitions="84, *">
+        
+        <Border Grid.Row="0" Background="#E6F5F7F8" BorderBrush="#D2DCDC" BorderThickness="0,0,0,1" Padding="24,0" ZIndex="10">
+            <Grid ColumnDefinitions="Auto, *">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                    <Border Background="Transparent" Width="72" Height="72" VerticalAlignment="Center">
+                        <Image Source="avares://map_app/Assets/logo.png" 
+                               Width="72" Height="72" 
+                               Stretch="Uniform" 
+                               RenderOptions.BitmapInterpolationMode="HighQuality"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="ГДЕ Я?" FontSize="22" FontWeight="Bold" Foreground="#1A1A1A" LetterSpacing="1.5"/>
+                        <TextBlock Text="Навигационный комплекс университетского кампуса" FontSize="12" Foreground="#666666"/>
+                    </StackPanel>
                 </StackPanel>
-
-                <!-- Куда -->
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Куда:" FontSize="13" Foreground="#666666"/>
-                    <ComboBox Name="ComboEnd" HorizontalAlignment="Stretch">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </StackPanel>
-
-                <!-- Чекбокс маршрута для инвалидов -->
-                <CheckBox Name="ChkAccessibleRoute" Content="Маршрут для инвалидов (без лестниц)" FontSize="13" Foreground="#333333"/>
-
-                <Separator Margin="0,8" Background="#E0E0E0"/>
-
-                <!-- Результат расчета -->
-                <StackPanel Name="RouteInfoPanel" IsVisible="False" Spacing="8">
-                    <TextBlock Text="Время в пути:" FontSize="13" Foreground="#666666"/>
-                    <TextBlock Name="TxtTravelTime" Text="0 сек" FontSize="26" FontWeight="Bold" Foreground="#222222"/>
-                </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Область карты с масштабированием -->
-        <paz:ZoomBorder Grid.Column="1" Name="ZoomControl"
-                        PanButton="Middle"
-                        ZoomSpeed="1.2"
-                        Stretch="None"
-                        EnableConstrains="False"
-                        Background="#FAFAFA">
-            <Grid Name="MapContainer" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image Name="MapImage" Stretch="Fill"/>
-                <Canvas Name="MapCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-            </Grid>
-        </paz:ZoomBorder>
+        <Grid Grid.Row="1" ColumnDefinitions="340, *">
+            
+            <Border Grid.Column="0" Background="#F0F7F8FA" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Padding="20" ZIndex="5">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Маршрут" FontSize="20" FontWeight="Bold" Foreground="#222222"/>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Откуда:" FontSize="13" Foreground="#666666" FontWeight="Medium"/>
+                        <ComboBox Name="ComboStart" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Куда:" FontSize="13" Foreground="#666666" FontWeight="Medium"/>
+                        <ComboBox Name="ComboEnd" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <CheckBox Name="ChkAccessibleRoute" Content="♿ Маршрут для инвалидов" FontSize="13" Foreground="#333333" Margin="0,4"/>
+
+                    <Separator Margin="0,4" Background="#E0E0E0"/>
+
+                    <Border Name="RouteInfoPanel" IsVisible="False" Background="#EAEFF4" Padding="14" CornerRadius="8">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Время в пути:" FontSize="12" Foreground="#555555"/>
+                            <TextBlock Name="TxtTravelTime" Text="0 сек" FontSize="24" FontWeight="Bold" Foreground="#FC3F1D"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <paz:ZoomBorder Grid.Column="1" Name="ZoomControl"
+                            PanButton="Middle"
+                            ZoomSpeed="1.2"
+                            Stretch="None"
+                            EnableConstrains="False"
+                            Background="#FAFAFA">
+                <Grid Name="MapContainer" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image Name="MapImage" Stretch="Fill"/>
+                    <Canvas Name="MapCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                </Grid>
+            </paz:ZoomBorder>
+        </Grid>
     </Grid>
 </Window>

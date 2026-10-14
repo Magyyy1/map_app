@@ -20,7 +20,6 @@ public class PolygonDto
     [JsonPropertyName("node_id")]
     public int NodeId { get; set; }
 
-    // Flattened coordinate pairs: [x1, y1, x2, y2, ...].
     [JsonPropertyName("points")]
     public List<int> Points { get; set; } = new();
 }
@@ -60,7 +59,6 @@ public class EdgeDto
     [JsonPropertyName("weight")]
     public double Weight { get; set; }
 
-    // Псевдонимы для обратной совместимости с редактором MapView
     [JsonIgnore]
     public int Source
     {

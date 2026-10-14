@@ -72,7 +72,6 @@
                         <TextBlock x:Name="OverlayTitle" Text="Новая точка" FontWeight="Bold" FontSize="16"/>
                         <TextBlock Text="Тип точки:" Classes="hint"/>
                         
-                        <!-- Русские наименования типов точек -->
                         <ComboBox x:Name="NodeTypeComboBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="OnNodeTypeChanged">
                             <ComboBoxItem Content="Дорога" Tag="road"/>
                             <ComboBoxItem Content="Точка маршрута" Tag="waypoint"/>

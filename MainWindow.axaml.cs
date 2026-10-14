@@ -159,7 +159,6 @@ public partial class MainWindow : Window
         if (_graph == null)
             return (new List<NodeDto>(), 0);
 
-        // если включен режим для инвалидов, лестницы исключаются
         var excludedNodeIds = accessibleOnly
             ? _graph.Nodes.Where(node => node.Type == "stairs").Select(node => node.Id).ToHashSet()
             : new HashSet<int>();
@@ -228,9 +227,9 @@ public partial class MainWindow : Window
                     .Chunk(2)
                     .Select(pair => new Point(pair[0], pair[1]))),
                 Fill = isSelectedRoutePoint
-                    ? new SolidColorBrush(Color.FromArgb(50, 255, 0, 0))
+                    ? new SolidColorBrush(Color.FromArgb(50, 252, 63, 29))
                     : Brushes.Transparent,
-                Stroke = isSelectedRoutePoint ? Brushes.Red : Brushes.Transparent,
+                Stroke = isSelectedRoutePoint ? Brushes.OrangeRed : Brushes.Transparent,
                 StrokeThickness = isSelectedRoutePoint ? 3 : 0,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Tag = node
